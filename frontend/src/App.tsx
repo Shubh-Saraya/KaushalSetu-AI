@@ -27,10 +27,36 @@ const demoUsers = [
   { email: 'admin@demo.local', password: 'demo123', role: 'admin' as const },
 ];
 
+const workerProfile = {
+  workerId: 'KS-2026001',
+  trade: 'Electrician',
+  language: 'Hindi',
+  state: 'Maharashtra',
+  district: 'Nagpur',
+  age: 29,
+  yearsExp: 6,
+  type: 'Daily wage',
+  tasks: ['Switchboard installation', 'MCB replacement', 'Basic wiring repairs', 'Testing continuity'],
+  tools: ['Multimeter', 'Screwdrivers', 'Pliers', 'Electrical test lamp'],
+  evidence: [
+    { label: 'Safety checklist', status: 'Verified' },
+    { label: 'Installation photos', status: 'Uploaded' },
+    { label: 'Fault diagnosis log', status: 'Missing evidence' },
+  ],
+};
+
+const rubricRows = [
+  { criterion: 'Tool identification', score: 3, status: 'Satisfactory' },
+  { criterion: 'Electrical safety', score: 2, status: 'Satisfactory' },
+  { criterion: 'Wiring execution', score: 2, status: 'Satisfactory' },
+  { criterion: 'Fault diagnosis', score: 1, status: 'Insufficient evidence' },
+];
+
 function App() {
   const [user, setUser] = useState<User | null>(null);
   const [email, setEmail] = useState('worker@demo.local');
   const [password, setPassword] = useState('demo123');
+  const [activeTab, setActiveTab] = useState('Overview');
   const [qualifications, setQualifications] = useState<Qualification[]>([]);
 
   useEffect(() => {
@@ -58,21 +84,12 @@ function App() {
     ]);
   }, []);
 
-  const login = () => {
-    const found = demoUsers.find((entry) => entry.email === email && entry.password === password);
-    if (!found) {
-      alert('Invalid demo credentials');
-      return;
-    }
-
-    setUser({
-      id: found.role === 'worker' ? 1 : found.role === 'assessor' ? 2 : 3,
-      name: found.role === 'worker' ? 'Asha Worker' : found.role === 'assessor' ? 'Rahul Assessor' : 'Meera Admin',
-      email,
-      role: found.role,
-      language: found.role === 'worker' ? 'Hindi' : 'English',
-    });
-  };
+  const tabs = useMemo(() => {
+    if (!user) return ['Login'];
+    if (user.role === 'worker') return ['Overview', 'Profile', 'Evidence', 'Qualifications'];
+    if (user.role === 'assessor') return ['Overview', 'Assignments', 'Rubric', 'AI Assistance'];
+    return ['Overview', 'Analytics', 'Assessments', 'Records'];
+  }, [user]);
 
   const statCards = useMemo(() => {
     if (!user) return [];
@@ -99,6 +116,23 @@ function App() {
       { label: 'Flagged cases', value: '2' },
     ];
   }, [user]);
+
+  const login = () => {
+    const found = demoUsers.find((entry) => entry.email === email && entry.password === password);
+    if (!found) {
+      alert('Invalid demo credentials');
+      return;
+    }
+
+    setUser({
+      id: found.role === 'worker' ? 1 : found.role === 'assessor' ? 2 : 3,
+      name: found.role === 'worker' ? 'Asha Worker' : found.role === 'assessor' ? 'Rahul Assessor' : 'Meera Admin',
+      email,
+      role: found.role,
+      language: found.role === 'worker' ? 'Hindi' : 'English',
+    });
+    setActiveTab('Overview');
+  };
 
   if (!user) {
     return (
@@ -131,116 +165,267 @@ function App() {
   }
 
   return (
-    <div className="app-shell">
-      <header className="topbar">
-        <div>
-          <p className="eyebrow">KaushalSetu AI</p>
-          <h2>{user.role === 'worker' ? 'Worker dashboard' : user.role === 'assessor' ? 'Assessor workspace' : 'Administrator analytics'}</h2>
+    <div className="dashboard-shell">
+      <aside className="sidebar">
+        <div className="brand-block">
+          <div className="brand-mark small">KS</div>
+          <div>
+            <p className="eyebrow">KaushalSetu</p>
+            <strong>AI RPL Suite</strong>
+          </div>
         </div>
-        <button className="secondary-button" onClick={() => setUser(null)}>Logout</button>
-      </header>
 
-      <section className="stats-grid">
-        {statCards.map((item) => (
-          <div key={item.label} className="stat-card">
-            <span>{item.label}</span>
-            <strong>{item.value}</strong>
+        <nav className="nav-list">
+          {tabs.map((tab) => (
+            <button
+              key={tab}
+              className={activeTab === tab ? 'nav-button active' : 'nav-button'}
+              onClick={() => setActiveTab(tab)}
+            >
+              {tab}
+            </button>
+          ))}
+        </nav>
+
+        <div className="profile-mini">
+          <strong>{user.name}</strong>
+          <span>{user.role}</span>
+        </div>
+      </aside>
+
+      <main className="main-panel">
+        <header className="topbar">
+          <div>
+            <p className="eyebrow">Dashboard</p>
+            <h2>{user.role === 'worker' ? 'Worker workspace' : user.role === 'assessor' ? 'Assessor dashboard' : 'Administrator analytics'}</h2>
           </div>
-        ))}
-      </section>
+          <button className="secondary-button" onClick={() => setUser(null)}>Logout</button>
+        </header>
 
-      <section className="content-grid">
-        <div className="panel wide-panel">
-          <div className="panel-header">
-            <h3>Qualification-pack matching</h3>
-            <span className="pill warning">AI suggestions</span>
-          </div>
+        <section className="stats-grid">
+          {statCards.map((card) => (
+            <div key={card.label} className="stat-card">
+              <span>{card.label}</span>
+              <strong>{card.value}</strong>
+            </div>
+          ))}
+        </section>
 
-          <div className="candidate-list">
-            {qualifications.map((item) => (
-              <div key={item.code} className="candidate-card">
-                <div className="candidate-head">
-                  <div>
-                    <small>{item.code}</small>
-                    <h4>{item.title}</h4>
-                  </div>
-                  <div className="score-box">{item.score}</div>
-                </div>
-                <p>{item.explanation}</p>
-                <div className="candidate-columns">
-                  <div>
-                    <small>Matched criteria</small>
-                    <ul>
-                      {item.matched_criteria.map((criterion) => <li key={criterion}>{criterion}</li>)}
-                    </ul>
-                  </div>
-                  <div>
-                    <small>Missing evidence</small>
-                    <ul>
-                      {item.missing_information.map((criterion) => <li key={criterion}>{criterion}</li>)}
-                    </ul>
-                  </div>
-                </div>
-                <div className="meta-row">
-                  <span>NSQF: {item.nsqf_level}</span>
-                  <span>{item.verification_status}</span>
-                </div>
+        {activeTab === 'Overview' && (
+          <div className="content-grid">
+            <div className="panel wide-panel">
+              <div className="panel-header">
+                <h3>AI qualification mapping</h3>
+                <span className="pill warning">Suggestions only</span>
               </div>
-            ))}
-          </div>
-        </div>
 
-        <div className="panel">
-          <div className="panel-header">
-            <h3>Profile snapshot</h3>
-            <span className="pill success">Submitted</span>
-          </div>
-          <dl className="meta-list">
-            <div><dt>Worker ID</dt><dd>KS-2026001</dd></div>
-            <div><dt>Preferred language</dt><dd>Hindi</dd></div>
-            <div><dt>State / District</dt><dd>Maharashtra / Nagpur</dd></div>
-            <div><dt>Primary trade</dt><dd>Electrician</dd></div>
-            <div><dt>Years of experience</dt><dd>6</dd></div>
-          </dl>
-        </div>
-      </section>
+              <div className="candidate-list">
+                {qualifications.map((item) => (
+                  <div key={item.code} className="candidate-card">
+                    <div className="candidate-head">
+                      <div>
+                        <small>{item.code}</small>
+                        <h4>{item.title}</h4>
+                      </div>
+                      <div className="score-box">{item.score}</div>
+                    </div>
+                    <p>{item.explanation}</p>
+                    <div className="candidate-columns">
+                      <div>
+                        <small>Matched criteria</small>
+                        <ul>
+                          {item.matched_criteria.map((criterion) => <li key={criterion}>{criterion}</li>)}
+                        </ul>
+                      </div>
+                      <div>
+                        <small>Missing evidence</small>
+                        <ul>
+                          {item.missing_information.map((criterion) => <li key={criterion}>{criterion}</li>)}
+                        </ul>
+                      </div>
+                    </div>
+                    <div className="meta-row">
+                      <span>NSQF: {item.nsqf_level}</span>
+                      <span>{item.verification_status}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
 
-      <section className="bottom-grid">
-        <div className="panel">
-          <div className="panel-header">
-            <h3>Assessment rubric</h3>
-            <span className="pill neutral">Electrician</span>
+            <div className="panel">
+              <div className="panel-header">
+                <h3>Profile snapshot</h3>
+                <span className="pill success">Submitted</span>
+              </div>
+              <dl className="meta-list">
+                <div><dt>Worker ID</dt><dd>{workerProfile.workerId}</dd></div>
+                <div><dt>Trade</dt><dd>{workerProfile.trade}</dd></div>
+                <div><dt>Language</dt><dd>{workerProfile.language}</dd></div>
+                <div><dt>Location</dt><dd>{workerProfile.state} / {workerProfile.district}</dd></div>
+                <div><dt>Experience</dt><dd>{workerProfile.yearsExp} years</dd></div>
+              </dl>
+            </div>
           </div>
-          <table>
-            <thead>
-              <tr>
-                <th>Criterion</th>
-                <th>Score</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><td>Tool identification</td><td>3</td><td>Satisfactory</td></tr>
-              <tr><td>Safety compliance</td><td>2</td><td>Satisfactory</td></tr>
-              <tr><td>Wiring task execution</td><td>2</td><td>Satisfactory</td></tr>
-              <tr><td>Fault diagnosis</td><td>1</td><td>Insufficient evidence</td></tr>
-            </tbody>
-          </table>
-        </div>
+        )}
 
-        <div className="panel">
-          <div className="panel-header">
-            <h3>AI assistance panel</h3>
-            <span className="pill warning">Human review required</span>
+        {activeTab === 'Profile' && (
+          <div className="panel">
+            <div className="panel-header">
+              <h3>Worker profile</h3>
+              <span className="pill neutral">Guided application</span>
+            </div>
+            <div className="form-grid">
+              <div className="field"><label>Worker ID</label><input value={workerProfile.workerId} readOnly /></div>
+              <div className="field"><label>Name</label><input value="Asha Worker" readOnly /></div>
+              <div className="field"><label>Age</label><input value={workerProfile.age} readOnly /></div>
+              <div className="field"><label>Preferred language</label><input value={workerProfile.language} readOnly /></div>
+              <div className="field"><label>State</label><input value={workerProfile.state} readOnly /></div>
+              <div className="field"><label>District</label><input value={workerProfile.district} readOnly /></div>
+              <div className="field wide"><label>Primary trade</label><input value={workerProfile.trade} readOnly /></div>
+              <div className="field"><label>Years of experience</label><input value={workerProfile.yearsExp} readOnly /></div>
+              <div className="field"><label>Employment type</label><input value={workerProfile.type} readOnly /></div>
+              <div className="field wide"><label>Tasks regularly performed</label><textarea value={workerProfile.tasks.join(', ')} readOnly /></div>
+              <div className="field wide"><label>Tools and equipment used</label><textarea value={workerProfile.tools.join(', ')} readOnly /></div>
+            </div>
           </div>
-          <ul className="bullet-list">
-            <li>Summarises evidence: installation photos and supervisor checklist available.</li>
-            <li>Identifies missing evidence: fault-finding log and live testing records.</li>
-            <li>Suggests follow-up: request direct evidence of safe handling and testing procedure.</li>
-            <li>Flags inconsistency: incomplete evidence should not trigger final certification.</li>
-          </ul>
-        </div>
-      </section>
+        )}
+
+        {activeTab === 'Evidence' && (
+          <div className="panel">
+            <div className="panel-header">
+              <h3>Evidence submission</h3>
+              <span className="pill warning">Review required</span>
+            </div>
+            <div className="evidence-list">
+              {workerProfile.evidence.map((item) => (
+                <div key={item.label} className="evidence-item">
+                  <span>{item.label}</span>
+                  <strong className={item.status === 'Missing evidence' ? 'status warning' : 'status good'}>{item.status}</strong>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'Assignments' && (
+          <div className="panel">
+            <div className="panel-header">
+              <h3>Assigned workers</h3>
+              <span className="pill neutral">3 pending</span>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Worker</th>
+                  <th>Trade</th>
+                  <th>Status</th>
+                  <th>Progress</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Asha Worker</td><td>Electrician</td><td>Under review</td><td>82%</td></tr>
+                <tr><td>Rajesh Kumar</td><td>Welder</td><td>Practical assessment</td><td>58%</td></tr>
+                <tr><td>Sanjana Patil</td><td>Plumber</td><td>Draft</td><td>34%</td></tr>
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {activeTab === 'Rubric' && (
+          <div className="panel">
+            <div className="panel-header">
+              <h3>Criterion-based assessment</h3>
+              <span className="pill success">Electrician</span>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Criterion</th>
+                  <th>Score</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rubricRows.map((row) => (
+                  <tr key={row.criterion}>
+                    <td>{row.criterion}</td>
+                    <td>{row.score}</td>
+                    <td>{row.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {activeTab === 'AI Assistance' && (
+          <div className="panel">
+            <div className="panel-header">
+              <h3>AI assistance panel</h3>
+              <span className="pill warning">Human review required</span>
+            </div>
+            <ul className="bullet-list">
+              <li>Summaries evidence: installation photos and supervisor checklist available.</li>
+              <li>Identifies missing evidence: fault-finding log and live testing records.</li>
+              <li>Suggests follow-up: request direct evidence of safe handling and testing procedure.</li>
+              <li>Flags inconsistency: incomplete evidence should not trigger final certification.</li>
+            </ul>
+          </div>
+        )}
+
+        {activeTab === 'Analytics' && (
+          <div className="panel">
+            <div className="panel-header">
+              <h3>Administrator analytics</h3>
+              <span className="pill neutral">Synthetic demo</span>
+            </div>
+            <div className="analytics-grid">
+              <div><span>Registered workers</span><strong>14</strong></div>
+              <div><span>Assessments completed</span><strong>9</strong></div>
+              <div><span>Pending reviews</span><strong>4</strong></div>
+              <div><span>Average completion</span><strong>3.4 days</strong></div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'Assessments' && (
+          <div className="panel">
+            <div className="panel-header">
+              <h3>Assessment records</h3>
+              <span className="pill neutral">Recent</span>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Reference</th>
+                  <th>Trade</th>
+                  <th>Recommendation</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>AS-1001</td><td>Electrician</td><td>Recommended for review</td><td>Completed</td></tr>
+                <tr><td>AS-1042</td><td>Welder</td><td>Requires evidence</td><td>Pending</td></tr>
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {activeTab === 'Records' && (
+          <div className="panel">
+            <div className="panel-header">
+              <h3>Verification notices</h3>
+              <span className="pill warning">Official validation needed</span>
+            </div>
+            <ul className="bullet-list">
+              <li>Qualification records shown here are demonstration data and require official verification.</li>
+              <li>AI matches are relevance indicators only.</li>
+              <li>Final certification decisions remain with authorised human assessors and certification authority.</li>
+            </ul>
+          </div>
+        )}
+      </main>
     </div>
   );
 }
