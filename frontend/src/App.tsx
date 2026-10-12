@@ -202,6 +202,10 @@ function App() {
           <button className="secondary-button" onClick={() => setUser(null)}>Logout</button>
         </header>
 
+        <div className="notice-banner">
+          AI outputs are suggestions only. Final assessment and certification decisions require authorised human review and official verification.
+        </div>
+
         <section className="stats-grid">
           {statCards.map((card) => (
             <div key={card.label} className="stat-card">
@@ -431,3 +435,4 @@ function App() {
 }
 
 export default App;
+
