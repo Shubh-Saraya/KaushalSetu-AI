@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.db import SessionLocal
 from app.models import WorkerProfile
 from app.schemas import WorkerProfileCreate
-from app.services.qualification import build_candidate_matches
+from app.services.qualification import build_candidate_matches, build_ai_assessment_summary
 
 router = APIRouter()
 
@@ -19,6 +19,8 @@ def get_db():
 @router.get("/worker/summary")
 def worker_summary(db: Session = Depends(get_db)):
     profile = db.query(WorkerProfile).first()
+    if not profile:
+        return {"worker_id": None, "status": "Draft", "trade": None, "years_experience": 0}
     return {
         "worker_id": profile.worker_id,
         "status": profile.status,
@@ -46,7 +48,7 @@ def save_profile(payload: WorkerProfileCreate, db: Session = Depends(get_db)):
         setattr(profile, field, value)
 
     profile.status = "Submitted"
-    profile.ai_summary = "Strong alignment with electrician trade. Missing safety and fault diagnosis evidence must be reviewed by a human assessor."
+    profile.ai_summary = "Strong alignment with electrician trade. Human review is required for safety and fault diagnosis evidence."
     profile.ai_suggestions = ["Add evidence for live testing", "Verify safety compliance"]
     db.commit()
     return {"status": "saved", "worker_id": profile.worker_id}
@@ -55,6 +57,9 @@ def save_profile(payload: WorkerProfileCreate, db: Session = Depends(get_db)):
 @router.get("/worker/qualifications")
 def worker_qualifications(db: Session = Depends(get_db)):
     profile = db.query(WorkerProfile).first()
+    if not profile:
+        return {"matches": []}
+
     text = " ".join(filter(None, [
         profile.primary_trade,
         profile.tasks_performed,
@@ -62,4 +67,7 @@ def worker_qualifications(db: Session = Depends(get_db)):
         profile.previous_training,
         profile.evidence_summary,
     ]))
-    return {"matches": build_candidate_matches(text)}
+    return {
+        "matches": build_candidate_matches(text),
+        "ai_summary": build_ai_assessment_summary(text),
+    }

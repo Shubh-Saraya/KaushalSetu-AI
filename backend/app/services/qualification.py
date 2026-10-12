@@ -1,12 +1,15 @@
-from typing import List
+from typing import Any, Dict, List
 
 
-def build_candidate_matches(profile_text: str):
+def build_candidate_matches(profile_text: str) -> List[Dict[str, Any]]:
     text = (profile_text or "").lower()
-    keywords = {
-        "electrician": ["electrician", "wiring", "switchboard", "circuit", "multimeter", "electrical", "fault", "safe wiring"],
-        "construction": ["construction", "maintenance", "repair", "installation", "site work"],
-        "safety": ["safety", "insulation", "testing", "grounding", "ppe", "fault detection"],
+    if not text:
+        return []
+
+    keyword_groups = {
+        "electrical_work": ["electrician", "wiring", "switchboard", "circuit", "multimeter", "electrical", "fault"],
+        "construction_work": ["construction", "maintenance", "repair", "installation", "site work"],
+        "safety_and_testing": ["safety", "insulation", "testing", "grounding", "ppe", "fault detection"],
     }
 
     pack_map = {
@@ -24,19 +27,20 @@ def build_candidate_matches(profile_text: str):
         },
     }
 
-    matches = []
+    matches: List[Dict[str, Any]] = []
     for code, pack in pack_map.items():
-        matched = []
-        missing = []
+        matched: List[str] = []
+        missing: List[str] = []
         score = 0
 
-        for label, terms in keywords.items():
+        for group_name, terms in keyword_groups.items():
             if any(term in text for term in terms):
-                matched.append(label)
+                matched.append(group_name.replace("_", " "))
                 score += 25
 
         for criterion in pack["criteria"]:
-            if any(k in text for k in criterion.lower().split()[:3]):
+            criterion_tokens = criterion.lower().split()[:3]
+            if any(token in text for token in criterion_tokens):
                 matched.append(criterion)
                 score += 10
             else:
@@ -51,11 +55,28 @@ def build_candidate_matches(profile_text: str):
             "title": pack["title"],
             "nsqf_level": pack["nsqf_level"],
             "score": round(min(score, 96), 1),
-            "explanation": f"This skill profile suggests a relevant match to {pack['title']}. The system flags this as a relevance indicator only, not as proof of competence.",
-            "matched_criteria": list(dict.fromkeys(matched))[:5],
+            "explanation": "This output is an AI relevance indicator only. It suggests likely qualification fit based on declared skills and work history, but it is not a certificate or proof of competence.",
+            "matched_criteria": matched[:5],
             "missing_information": missing[:3],
             "verification_status": pack["verification_status"],
         })
 
     matches.sort(key=lambda item: item["score"], reverse=True)
     return matches
+
+
+def build_ai_assessment_summary(profile_text: str) -> Dict[str, Any]:
+    text = (profile_text or "").lower()
+    issues = []
+    if "multimeter" not in text:
+        issues.append("No explicit multimeter evidence has been recorded.")
+    if "safety" not in text:
+        issues.append("Safety compliance evidence requires confirmation.")
+    if "fault" not in text and "troubleshooting" not in text:
+        issues.append("Fault diagnosis evidence is incomplete.")
+
+    return {
+        "summary": "Worker experience indicates relevant electrical and installation work. Human verification is required to confirm practical competence and safety compliance.",
+        "issues": issues,
+        "confidence": "Low to medium relevance indicator",
+    }

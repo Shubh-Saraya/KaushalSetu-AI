@@ -1,27 +1,28 @@
 # KaushalSetu AI
 
-AI-assisted skill assessment and recognition platform for Recognition of Prior Learning (RPL) for Smart India Hackathon 2026.
+AI-assisted skill assessment and Recognition of Prior Learning (RPL) demo platform built for the Smart India Hackathon 2026 challenge.
 
-## Features
+## Project overview
 
-- Worker portal with guided profile and evidence collection
-- AI-assisted qualification mapping with deterministic fallback
-- Assessor dashboard with rubric-based scoring
-- Admin dashboard with analytics and audit trends
-- Offline-first status page and sync-ready architecture
-- SQLite persistence and demo seed data
-- Gemini-ready configuration via environment variables
+KaushalSetu AI is a role-based RPL application for workers, assessors, and administrators. It includes a guided worker profile flow, AI-assisted qualification matching, assessor Rubric evaluation, admin analytics, and a synthetic demo dataset clearly labeled as demonstration-only and requiring official verification.
 
-## Tech stack
+## Stack
 
 - Frontend: React + TypeScript + Vite
 - Backend: Python FastAPI
-- Persistence: SQLite (configurable for PostgreSQL later)
-- AI: Gemini API with deterministic fallback when the key is not configured
+- Database: SQLite (ready to move to PostgreSQL)
+- AI: Gemini-ready integration with deterministic fallback when the key is absent
+- Security: role-based demo access, audit trail, privacy disclaimers
 
-## Quick start
+## Demo login credentials
 
-### 1) Backend
+- Worker: `worker@demo.local` / `demo123`
+- Assessor: `assessor@demo.local` / `demo123`
+- Admin: `admin@demo.local` / `demo123`
+
+## Run locally
+
+Backend:
 
 ```bash
 cd backend
@@ -31,7 +32,7 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### 2) Frontend
+Frontend:
 
 ```bash
 cd frontend
@@ -39,14 +40,12 @@ npm install
 npm run dev -- --host 0.0.0.0
 ```
 
-### 3) Environment
+## Environment variables
 
-Copy `.env.example` to `.env` and set your values.
+Copy `.env.example` and configure values before production use.
 
-## Demo credentials
+## Important notes
 
-- Worker: `worker@demo.local` / `demo123`
-- Assessor: `assessor@demo.local` / `demo123`
-- Admin: `admin@demo.local` / `demo123`
-
-This application intentionally uses demonstration data and must be reviewed by authorised human assessors before any certification decision.
+- All AI-generated outputs are clearly treated as suggestions and not certificates.
+- Synthetic qualification data and demo records are intentionally marked as requiring official verification.
+- Human assessor review remains mandatory before final certification decisions.

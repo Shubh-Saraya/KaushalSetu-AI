@@ -20,10 +20,10 @@ def assessor_assignments(db: Session = Depends(get_db)):
     worker = db.query(WorkerProfile).first()
     return {
         "assigned_workers": [{
-            "worker_id": worker.worker_id,
+            "worker_id": worker.worker_id if worker else "KS-2026001",
             "name": "Asha Worker",
-            "trade": worker.primary_trade,
-            "status": worker.status,
+            "trade": worker.primary_trade if worker else "Electrician",
+            "status": worker.status if worker else "Submitted",
             "score": 72,
             "progress": 82,
         }]

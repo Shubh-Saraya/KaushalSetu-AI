@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.db import init_db, SessionLocal
+from app.db import init_db
 from app.seed import seed_data
 
 app = FastAPI(title="KaushalSetu AI API", version="1.0.0")

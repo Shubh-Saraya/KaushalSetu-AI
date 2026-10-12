@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
+from datetime import datetime
 from app.db import SessionLocal
 from app.models import User, WorkerProfile, QualificationPack, Assessment
-from datetime import datetime
 
 
 def seed_data():
@@ -35,21 +35,21 @@ def seed_data():
                 industries="Construction and industrial maintenance.",
                 evidence_summary="Installation photos and supervisor checklists submitted.",
                 status="Submitted",
-                ai_summary="Strong match to electrician trade. Requires evidence for fault diagnosis and safety documentation.",
-                ai_suggestions=["Add evidence for fault-finding", "Confirm PPE and safety checklist"],
+                ai_summary="Strong match to electrician trade. Requires expert review for fault diagnosis and safety records.",
+                ai_suggestions=["Add evidence for live testing", "Confirm PPE compliance"],
             )
             db.add(profile)
             db.commit()
 
         if db.query(QualificationPack).count() == 0:
-            packs = [
+            db.add_all([
                 QualificationPack(
                     code="QP-ELC-01",
                     title="Electrician General (Demonstration)",
                     nsqf_level="Level 4",
-                    description="Demonstration electrician pack for skill assessment and mapping.",
+                    description="Demonstration electrician pack for evaluation and testing.",
                     verification_status="Demonstration record; requires official verification.",
-                    source_notice="Synthetic demonstration records. Requires official verification.",
+                    source_notice="Synthetic demonstration records. Official verification required.",
                     criteria=["Tool identification", "Electrical safety", "Wiring installation", "Fault diagnosis", "Testing equipment use"],
                 ),
                 QualificationPack(
@@ -58,11 +58,10 @@ def seed_data():
                     nsqf_level="Level 3",
                     description="Basic residential wiring operations and maintenance tasks.",
                     verification_status="Demonstration record; requires official verification.",
-                    source_notice="Synthetic demonstration records. Requires official verification.",
+                    source_notice="Synthetic demonstration records. Official verification required.",
                     criteria=["Basic wiring layout", "Switchboard installation", "Safety compliance", "Testing and troubleshooting"],
                 ),
-            ]
-            db.add_all(packs)
+            ])
             db.commit()
 
         if db.query(Assessment).count() == 0:
