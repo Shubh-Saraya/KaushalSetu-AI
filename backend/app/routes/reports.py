@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.db import SessionLocal
-from app.models import WorkerProfile, Assessment
+from app.models import Assessment
 
 router = APIRouter()
 
@@ -14,19 +14,18 @@ def get_db():
         db.close()
 
 
-@router.get("/admin/dashboard")
-def admin_dashboard(db: Session = Depends(get_db)):
-    workers = db.query(WorkerProfile).count()
-    assessments = db.query(Assessment).count()
+@router.get("/reports/assessment/{assessment_id}")
+def assessment_report(assessment_id: int, db: Session = Depends(get_db)):
+    assessment = db.query(Assessment).filter(Assessment.id == assessment_id).first()
+    if not assessment:
+        raise HTTPException(status_code=404, detail="Assessment not found")
     return {
-        "registered_workers": workers,
-        "assessments_completed": assessments,
-        "pending_assessments": 4,
-        "average_completion_time_days": 3.4,
-        "trade_distribution": [
-            {"name": "Electrician", "value": 8},
-            {"name": "Welder", "value": 2},
-            {"name": "Plumber", "value": 1},
-        ],
-        "summary": "Synthetic demonstration analytics under human review.",
+        "worker_reference_id": "KS-2026001",
+        "trade": assessment.selected_trade,
+        "qualification": "QP-ELC-01",
+        "verification_status": "Demonstration record; requires official verification.",
+        "assessment_date": assessment.created_at.isoformat(),
+        "final_recommendation": assessment.recommendation,
+        "report_disclaimer": "This report supports Recognition of Prior Learning assessment. It is not a certificate. Final assessment and certification decisions must be made by the appropriate authorised human assessor and certification authority.",
+        "rubric": assessment.rubric,
     }

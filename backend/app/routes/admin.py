@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.db import SessionLocal
 from app.models import WorkerProfile, Assessment
-from app.schemas import AssessmentScoreRequest
 
 router = APIRouter()
 
@@ -15,33 +14,19 @@ def get_db():
         db.close()
 
 
-@router.get("/assessor/assignments")
-def assessor_assignments(db: Session = Depends(get_db)):
-    worker = db.query(WorkerProfile).first()
+@router.get("/admin/dashboard")
+def admin_dashboard(db: Session = Depends(get_db)):
+    workers = db.query(WorkerProfile).count()
+    assessments = db.query(Assessment).count()
     return {
-        "assigned_workers": [{
-            "worker_id": worker.worker_id,
-            "name": "Asha Worker",
-            "trade": worker.primary_trade,
-            "status": worker.status,
-            "score": 72,
-            "progress": 82,
-        }]
+        "registered_workers": workers,
+        "assessments_completed": assessments,
+        "pending_assessments": 4,
+        "average_completion_time_days": 3.4,
+        "trade_distribution": [
+            {"name": "Electrician", "value": 8},
+            {"name": "Welder", "value": 2},
+            {"name": "Plumber", "value": 1},
+        ],
+        "summary": "Synthetic demonstration analytics under human review.",
     }
-
-
-@router.post("/assessments/score")
-def score_assessment(payload: AssessmentScoreRequest, db: Session = Depends(get_db)):
-    assessment = Assessment(
-        worker_id=payload.worker_id,
-        assessor_id=payload.assessor_id,
-        selected_trade=payload.selected_trade,
-        status="Completed",
-        score=sum(item.get("score", 0) for item in payload.rubric) / max(len(payload.rubric), 1),
-        recommendation=payload.recommendation,
-        rubric=payload.rubric,
-        audit_history=[{"actor": "Assesssor", "action": "Score recorded"}],
-    )
-    db.add(assessment)
-    db.commit()
-    return {"status": "saved", "assessment_id": assessment.id}

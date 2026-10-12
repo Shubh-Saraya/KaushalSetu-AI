@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field
-from typing import Optional, List, Any
+from pydantic import BaseModel
+from typing import Optional, List
 
 
 class UserLoginRequest(BaseModel):
@@ -8,8 +8,8 @@ class UserLoginRequest(BaseModel):
 
 
 class WorkerProfileCreate(BaseModel):
-    name: str
-    preferred_language: str = "Hindi"
+    name: Optional[str] = None
+    preferred_language: Optional[str] = "Hindi"
     state: Optional[str] = None
     district: Optional[str] = None
     primary_trade: Optional[str] = None
@@ -29,14 +29,3 @@ class AssessmentScoreRequest(BaseModel):
     selected_trade: str
     rubric: List[dict]
     recommendation: Optional[str] = "Pending"
-
-
-class QualificationMatch(BaseModel):
-    code: str
-    title: str
-    nsqf_level: str
-    score: float
-    explanation: str
-    matched_criteria: List[str]
-    missing_information: List[str]
-    verification_status: str

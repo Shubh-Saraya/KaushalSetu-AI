@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, Float, Boolean, DateTime, ForeignKey, JSON
+from sqlalchemy import Column, Integer, String, Text, Float, DateTime, JSON, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.db import Base
@@ -16,7 +16,6 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     profile = relationship("WorkerProfile", back_populates="user", uselist=False)
-    assessments = relationship("Assessment", back_populates="assessor")
 
 
 class WorkerProfile(Base):
@@ -39,7 +38,6 @@ class WorkerProfile(Base):
     industries = Column(Text)
     evidence_summary = Column(Text)
     status = Column(String(50), default="Draft")
-    submitted_at = Column(DateTime, nullable=True)
     ai_summary = Column(Text)
     ai_suggestions = Column(JSON, default=list)
 
@@ -54,8 +52,8 @@ class QualificationPack(Base):
     title = Column(String(255), nullable=False)
     nsqf_level = Column(String(50), default="Level 3")
     description = Column(Text)
-    verification_status = Column(String(100), default="Demonstration data")
-    source_notice = Column(Text, default="Synthetic demonstration records. Requires official verification.")
+    verification_status = Column(String(200), default="Demonstration data")
+    source_notice = Column(Text, default="Synthetic demonstration data. Requires official verification.")
     criteria = Column(JSON, default=list)
 
 
@@ -85,8 +83,6 @@ class Assessment(Base):
     audit_history = Column(JSON, default=list)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)
-
-    assessor = relationship("User", back_populates="assessments")
 
 
 class AuditLog(Base):
