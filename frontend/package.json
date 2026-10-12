@@ -1,0 +1,16 @@
+from fastapi import FastAPI
+from app.db import init_db
+from app.seed import seed_data
+
+
+def create_app() -> FastAPI:
+    app = FastAPI(title="KaushalSetu AI", version="1.0.0")
+    app.state.seeded = False
+
+    @app.on_event("startup")
+    def startup():
+        init_db()
+        seed_data()
+
+    from app.main import app as app_instance
+    return app_instance

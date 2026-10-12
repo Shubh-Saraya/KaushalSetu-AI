@@ -1,0 +1,288 @@
+import { useEffect, useMemo, useState } from 'react';
+
+type UserRole = 'worker' | 'assessor' | 'admin';
+
+type User = {
+  id: number;
+  name: string;
+  email: string;
+  role: UserRole;
+  language: string;
+};
+
+type Qualification = {
+  code: string;
+  title: string;
+  nsqf_level: string;
+  score: number;
+  explanation: string;
+  matched_criteria: string[];
+  missing_information: string[];
+  verification_status: string;
+};
+
+const demoUsers = [
+  { email: 'worker@demo.local', password: 'demo123', role: 'worker' },
+  { email: 'assessor@demo.local', password: 'demo123', role: 'assessor' },
+  { email: 'admin@demo.local', password: 'demo123', role: 'admin' },
+];
+
+function App() {
+  const [user, setUser] = useState<User | null>(null);
+  const [email, setEmail] = useState('worker@demo.local');
+  const [password, setPassword] = useState('demo123');
+  const [qualificationMatches, setQualificationMatches] = useState<Qualification[]>([]);
+  const [dashboard, setDashboard] = useState<any>(null);
+  const [workerData, setWorkerData] = useState<any>({
+    worker_id: 'KS-2026001',
+    status: 'Submitted',
+    trade: 'Electrician',
+    years_experience: 6,
+    ai_summary: 'Strong match to electrician trade. Requires evidence for fault diagnosis.',
+    ai_suggestions: ['Add evidence for fault-finding', 'Confirm PPE compliance'],
+  });
+
+  useEffect(() => {
+    const fetchMatches = async () => {
+      setQualificationMatches([
+        {
+          code: 'QP-ELC-01',
+          title: 'Electrician General (Demonstration)',
+          nsqf_level: 'Level 4',
+          score: 92,
+          explanation: 'This pack matches electrical installation, circuit testing, switchboard work, and safety compliance declared in the profile.',
+          matched_criteria: ['Tool identification', 'Electrical safety', 'Wiring installation'],
+          missing_information: ['Fault diagnosis evidence', 'Live testing records'],
+          verification_status: 'Demonstration record; requires official verification.',
+        },
+        {
+          code: 'QP-WIRE-02',
+          title: 'Domestic Wiring Technician',
+          nsqf_level: 'Level 3',
+          score: 74,
+          explanation: 'This is a relevant supporting pack for domestic wiring tasks and basic safe installation practices.',
+          matched_criteria: ['Basic wiring layout', 'Switchboard installation'],
+          missing_information: ['Workshop log', 'Supervisor verification'],
+          verification_status: 'Demonstration record; requires official verification.',
+        },
+      ]);
+    };
+    fetchMatches();
+  }, []);
+
+  const login = async () => {
+    const validUser = demoUsers.find((entry) => entry.email === email && entry.password === password);
+    if (!validUser) {
+      alert('Invalid demo credentials');
+      return;
+    }
+
+    const userPayload: User = {
+      id: validUser.role === 'worker' ? 1 : validUser.role === 'assessor' ? 2 : 3,
+      email,
+      name: validUser.role === 'worker' ? 'Asha Worker' : validUser.role === 'assessor' ? 'Rahul Assessor' : 'Meera Admin',
+      role: validUser.role,
+      language: validUser.role === 'worker' ? 'Hindi' : 'English',
+    };
+
+    setUser(userPayload);
+    if (validUser.role === 'admin') {
+      setDashboard({
+        registered_workers: 14,
+        assessments_completed: 9,
+        pending_assessments: 4,
+        average_completion_time_days: 3.4,
+        trade_distribution: [
+          { name: 'Electrician', value: 8 },
+          { name: 'Welder', value: 2 },
+          { name: 'Plumber', value: 1 },
+        ],
+      });
+    }
+  };
+
+  const dashboardCards = useMemo(() => {
+    if (!user) return [];
+    if (user.role === 'worker') {
+      return [
+        { label: 'Application status', value: workerData.status },
+        { label: 'Trade', value: workerData.trade },
+        { label: 'Experience', value: `${workerData.years_experience} years` },
+        { label: 'AI match', value: '92% relevance' },
+      ];
+    }
+    if (user.role === 'assessor') {
+      return [
+        { label: 'Assigned workers', value: '12' },
+        { label: 'Pending assessments', value: '4' },
+        { label: 'Completed', value: '9' },
+        { label: 'Review queue', value: '2' },
+      ];
+    }
+    return [
+      { label: 'Registered workers', value: '14' },
+      { label: 'Completed assessments', value: '9' },
+      { label: 'Pending review', value: '4' },
+      { label: 'Flagged cases', value: '2' },
+    ];
+  }, [user, workerData]);
+
+  if (!user) {
+    return (
+      <div className="auth-shell">
+        <div className="auth-card">
+          <div className="brand-block">
+            <div className="brand-badge">KS</div>
+            <div>
+              <p className="eyebrow">Smart India Hackathon 2026</p>
+              <h1>KaushalSetu AI</h1>
+            </div>
+          </div>
+
+          <div className="login-panel">
+            <h2>Secure login</h2>
+            <label>
+              Email
+              <input value={email} onChange={(e) => setEmail(e.target.value)} />
+            </label>
+            <label>
+              Password
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+            </label>
+            <button onClick={login}>Login</button>
+            <p className="demo-text">Demo login: worker@demo.local / demo123, assessor@demo.local / demo123, admin@demo.local / demo123</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="app-shell">
+      <header className="topbar">
+        <div>
+          <p className="eyebrow">KaushalSetu AI</p>
+          <h2>{user.role === 'worker' ? 'Worker dashboard' : user.role === 'assessor' ? 'Assessor workspace' : 'Administrator analytics'}</h2>
+        </div>
+        <button className="secondary-button" onClick={() => setUser(null)}>Logout</button>
+      </header>
+
+      <section className="summary-grid">
+        {dashboardCards.map((card) => (
+          <div key={card.label} className="summary-card">
+            <span>{card.label}</span>
+            <strong>{card.value}</strong>
+          </div>
+        ))}
+      </section>
+
+      <section className="main-grid">
+        <div className="panel wide">
+          <div className="panel-header">
+            <h3>AI-supported qualification mapping</h3>
+            <span className="pill warning">Suggestions only</span>
+          </div>
+          <div className="candidate-list">
+            {qualificationMatches.map((item) => (
+              <div key={item.code} className="candidate-card">
+                <div className="candidate-head">
+                  <div>
+                    <div className="code">{item.code}</div>
+                    <h4>{item.title}</h4>
+                  </div>
+                  <div className="score-box">{item.score}</div>
+                </div>
+                <p>{item.explanation}</p>
+                <div className="criteria-wrap">
+                  <div>
+                    <small>Matched criteria</small>
+                    <ul>
+                      {item.matched_criteria.map((criterion) => <li key={criterion}>{criterion}</li>)}
+                    </ul>
+                  </div>
+                  <div>
+                    <small>Missing evidence</small>
+                    <ul>
+                      {item.missing_information.map((criterion) => <li key={criterion}>{criterion}</li>)}
+                    </ul>
+                  </div>
+                </div>
+                <div className="meta-row">
+                  <span>NSQF: {item.nsqf_level}</span>
+                  <span>{item.verification_status}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="panel">
+          <div className="panel-header">
+            <h3>Worker profile snapshot</h3>
+            <span className="pill success">Submitted</span>
+          </div>
+          <dl className="meta-list">
+            <div><dt>Worker ID</dt><dd>{workerData.worker_id}</dd></div>
+            <div><dt>Preferred language</dt><dd>Hindi</dd></div>
+            <div><dt>State / District</dt><dd>Maharashtra / Nagpur</dd></div>
+            <div><dt>Primary trade</dt><dd>Electrician</dd></div>
+            <div><dt>Years of experience</dt><dd>{workerData.years_experience}</dd></div>
+          </dl>
+        </div>
+      </section>
+
+      <section className="lower-grid">
+        <div className="panel">
+          <div className="panel-header">
+            <h3>Assessment rubric</h3>
+            <span className="pill neutral">Electrician</span>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Criterion</th>
+                <th>Score</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Tool identification</td><td>3</td><td>Satisfactory</td></tr>
+              <tr><td>Safety compliance</td><td>2</td><td>Satisfactory</td></tr>
+              <tr><td>Wiring task execution</td><td>2</td><td>Satisfactory</td></tr>
+              <tr><td>Fault diagnosis</td><td>1</td><td>Insufficient evidence</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div className="panel">
+          <div className="panel-header">
+            <h3>AI assistance panel</h3>
+            <span className="pill warning">Human review required</span>
+          </div>
+          <ul className="bullet-list">
+            <li>Summarises evidence: installation and repair records available.</li>
+            <li>Highlights gap: need explicit fault-finding documentation.</li>
+            <li>Suggests follow-up: ask for safety checklist and live testing evidence.</li>
+            <li>Flags evaluation inconsistency: missing evidence may affect final recommendation.</li>
+          </ul>
+        </div>
+      </section>
+
+      {user.role === 'admin' && dashboard && (
+        <section className="panel">
+          <div className="panel-header">
+            <h3>Administrator analytics</h3>
+          </div>
+          <div className="analytics-grid">
+            <div><span>Registered workers</span><strong>{dashboard.registered_workers}</strong></div>
+            <div><span>Completed assessments</span><strong>{dashboard.assessments_completed}</strong></div>
+            <div><span>Pending assessments</span><strong>{dashboard.pending_assessments}</strong></div>
+            <div><span>Average completion</span><strong>{dashboard.average_completion_time_days} days</strong></div>
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}
+
+export default App;

@@ -1,0 +1,119 @@
+from app.db import Base, SessionLocal
+from app.models import User, WorkerProfile, QualificationPack, AuditLog, Assessment
+from passlib.context import CryptContext
+from datetime import datetime
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+def hash_password(password: str):
+    return pwd_context.hash(password)
+
+
+def verify_password(password: str, hashed: str):
+    return pwd_context.verify(password, hashed)
+
+
+def seed_data():
+    db = SessionLocal()
+    try:
+        if db.query(User).count() == 0:
+            users = [
+                User(name="Asha Worker", email="worker@demo.local", password=hash_password("demo123"), role="worker", language="Hindi"),
+                User(name="Rahul Assessor", email="assessor@demo.local", password=hash_password("demo123"), role="assessor", language="English"),
+                User(name="Meera Admin", email="admin@demo.local", password=hash_password("demo123"), role="admin", language="Hindi"),
+            ]
+            db.add_all(users)
+            db.commit()
+
+        if db.query(WorkerProfile).count() == 0:
+            worker_user = db.query(User).filter(User.email == "worker@demo.local").first()
+            profile = WorkerProfile(
+                user_id=worker_user.id,
+                worker_id="KS-2026001",
+                age=29,
+                state="Maharashtra",
+                district="Nagpur",
+                preferred_language="Hindi",
+                primary_trade="Electrician",
+                years_experience=6,
+                employment_type="Daily wage",
+                tasks_performed="Installed switchboards, changed MCBs, repaired wiring in homes and shops, tested continuity.",
+                tools_used="Multimeter, screwdrivers, pliers, insulation tape, electrical test lamp.",
+                previous_training="Industrial safety module on electrical wiring and panel maintenance.",
+                certifications="None",
+                industries="Construction and small-scale industrial maintenance.",
+                evidence_summary="Photographs of installations and repair work; safety checklist signed by supervisor.",
+                status="Submitted",
+                ai_summary="Strong match to electrician trade. Requires evidence for safe handling and fault diagnosis.",
+                ai_suggestions=["Add evidence for live circuit testing", "Confirm fault-finding procedure details"],
+            )
+            db.add(profile)
+            db.commit()
+
+        if db.query(QualificationPack).count() == 0:
+            packs = [
+                QualificationPack(
+                    code="QP-ELC-01",
+                    title="Electrician General (Demonstration)",
+                    nsqf_level="Level 4",
+                    description="Demonstration electrician pack for evaluation and skill matching.",
+                    verification_status="Demonstration record; requires official verification.",
+                    source_notice="Synthetic demonstration data. Official verification required.",
+                    criteria=["Tool identification", "Electrical safety", "Wiring installation", "Fault diagnosis", "Testing equipment use"]
+                ),
+                QualificationPack(
+                    code="QP-WIRE-02",
+                    title="Domestic Wiring Technician",
+                    nsqf_level="Level 3",
+                    description="Residential and commercial wiring operation support.",
+                    verification_status="Demonstration record; requires official verification.",
+                    source_notice="Synthetic demonstration data. Official verification required.",
+                    criteria=["Basic wiring layout", "Switchboard installation", "Safety compliance", "Testing and troubleshooting"]
+                ),
+            ]
+            db.add_all(packs)
+            db.commit()
+
+        if db.query(Assessment).count() == 0:
+            worker = db.query(WorkerProfile).first()
+            assessor = db.query(User).filter(User.role == "assessor").first()
+            assessment = Assessment(
+                worker_id=worker.id,
+                assessor_id=assessor.id,
+                selected_trade="Electrician",
+                status="Completed",
+                score=72,
+                recommendation="Recommended for review",
+                rubric=[
+                    {"criterion": "Tool identification", "score": 3, "status": "satisfactory"},
+                    {"criterion": "Safety compliance", "score": 2, "status": "satisfactory"},
+                    {"criterion": "Wiring task execution", "score": 2, "status": "satisfactory"},
+                    {"criterion": "Fault identification", "score": 1, "status": "insufficient evidence"},
+                ],
+                audit_history=[
+                    {"actor": "Rahul Assessor", "action": "Assessment started", "timestamp": datetime.utcnow().isoformat()},
+                    {"actor": "Rahul Assessor", "action": "Score recorded", "timestamp": datetime.utcnow().isoformat()},
+                ],
+            )
+            db.add(assessment)
+            db.commit()
+
+        audit = AuditLog(
+            actor="System",
+            action="Seeded demo data",
+            details="Synthetic demonstration records created for KaushalSetu AI.",
+        )
+        if db.query(AuditLog).count() == 0:
+            db.add(audit)
+            db.commit()
+    finally:
+        db.close()
